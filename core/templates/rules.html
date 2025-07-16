@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Rules{% endblock %}
+{% block content %}
+<h3 class="text-center mb-4">Assessment Rules</h3>
+<ul class="list-group mb-3">
+  <li class="list-group-item">🕒 You will have limited time to complete the test.</li>
+  <li class="list-group-item">🧠 Use your own knowledge. No external help allowed.</li>
+  <li class="list-group-item">🚫 Do not refresh or close the tab during assessment.</li>
+</ul>
+<form method="post">
+  {% csrf_token %}
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" name="agree" id="agree" required>
+    <label class="form-check-label" for="agree">
+      I have read and agree to the rules above.
+    </label>
+  </div>
+  <button type="submit" class="btn btn-primary w-100 mt-3">Start Assessment</button>
+</form>
+{% endblock %}
