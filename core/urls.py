@@ -1,4 +1,3 @@
-# core/urls.py
 from django.urls import path
 from . import views
 
@@ -7,4 +6,5 @@ urlpatterns = [
     path('rules/', views.rules_view, name='rules'),
     path('assessment/', views.assessment_view, name='assessment'),
     path('submit/', views.submit_view, name='submit'),
+    path('test-ended/', views.test_ended_view, name='test_ended'),
 ]
