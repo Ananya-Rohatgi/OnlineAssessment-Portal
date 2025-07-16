@@ -1,15 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Sign Up{% endblock %}
+{% load static %}
+
+{% block title %}Sign Up | Icon Assessment Portal{% endblock %}
+
 {% block content %}
-<h2 class="text-center mb-4">Create Your Account</h2>
-<form method="post">
+<div class="text-center mb-4">
+  
+  <h2 class="mt-3">Welcome to Icon Assessment Portal</h2>
+  <p class="text-muted">Register below to begin your test</p>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-danger" role="alert">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" novalidate>
   {% csrf_token %}
-  <input class="form-control" name="name" placeholder="Full Name" required>
-  <input class="form-control" name="roll_number" placeholder="Roll Number" required>
-  <input class="form-control" type="email" name="email" placeholder="College Email" required>
-  <input class="form-control" name="phone" placeholder="Phone Number" required>
-  <input class="form-control" type="password" name="password" placeholder="Password" required>
-  <button type="submit" class="btn btn-primary w-100 mt-3">Sign Up</button>
-  <p class="mt-3 text-center">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+  
+  <div class="mb-3">
+    <label for="name" class="form-label">Full Name</label>
+    <input type="text" class="form-control" id="name" name="name" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="roll_number" class="form-label">Roll Number</label>
+    <input type="text" class="form-control" id="roll_number" name="roll_number" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="email" class="form-label">College Email</label>
+    <input type="email" class="form-control" id="email" name="email" required>
+  </div>
+
+  <div class="mb-4">
+    <label for="phone" class="form-label">Phone Number</label>
+    <input type="text" class="form-control" id="phone" name="phone" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100">Start Test</button>
 </form>
 {% endblock %}

@@ -7,34 +7,26 @@ from .models import Student, Question, UserResponse
 
 # Signup
 def signup_view(request):
-    if request.method == 'POST':
-        data = request.POST
-        if Student.objects.filter(email=data['email']).exists() or Student.objects.filter(roll_number=data['roll_number']).exists():
-            messages.error(request, "Email or Roll Number already exists.")
-            return redirect('signup')
-        student = Student.objects.create(
-            name=data['name'],
-            roll_number=data['roll_number'],
-            email=data['email'],
-            phone=data['phone'],
-            password=data['password']
-        )
-        request.session['user_id'] = student.id
-        return redirect('rules')
-    return render(request, 'signup.html')
+    if request.method == "POST":
+        name = request.POST.get('name')
+        roll_number = request.POST.get('roll_number')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
 
-# Login
-def login_view(request):
-    if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
-        try:
-            student = Student.objects.get(email=email, password=password)
-            request.session['user_id'] = student.id
-            return redirect('rules')
-        except Student.DoesNotExist:
-            messages.error(request, "Invalid credentials.")
-    return render(request, 'login.html')
+        # Check if email already exists
+        if Student.objects.filter(email=email).exists():
+            messages.error(request, "This email is already registered. Please use a different email.")
+            return redirect('/')  # Or render again with form data
+
+        Student.objects.create(
+            name=name,
+            roll_number=roll_number,
+            email=email,
+            phone=phone
+        )
+        return redirect('/rules/')  # Or wherever you want to go next
+
+    return render(request, "signup.html")
 
 # Rules
 def rules_view(request):
