@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,21 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Secure Online Assessment</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
   <style>
-    body { background-color: #f5f7fa; }
+    body { 
+      background-color: #f5f7fa;
+      padding-top: 80px;
+    }
     .sidebar {
-      height: 100vh;
+      height: calc(100vh - 80px);
       overflow-y: auto;
       background: #ffffff;
       border-right: 1px solid #dee2e6;
       padding: 20px;
+      position: fixed;
+      width: 16.666667%;
+      top: 80px;
     }
     .question-box {
       background: #ffffff;
       padding: 25px;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-left: 16.666667%;
     }
     .progress-pill {
       width: 35px;
@@ -34,16 +41,42 @@
     .progress-pill.answered { background-color: #198754; color: white; }
     .progress-pill.visited { background-color: #0d6efd; color: white; }
     .progress-pill.not-visited { background-color: #adb5bd; color: white; }
-    .progress-pill.marked { background-color: #ffc107; color: black; }
+    .progress-pill.current { background-color: #ffc107; color: black; border: 2px solid #000; }
     .timer-box {
       background: #fff;
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
+    .btn-back { display: none; } /* Hide back button */
+    .navbar-brand img {
+      height: 40px;
+      margin-right: 10px;
+    }
+    .main-content {
+      margin-left: 16.666667%;
+      padding: 20px;
+    }
+    .right-sidebar {
+      position: fixed;
+      right: 0;
+      top: 80px;
+      width: 25%;
+      height: calc(100vh - 80px);
+      overflow-y: auto;
+      padding: 20px;
+    }
   </style>
 </head>
-<body onload="startTimer(); enterFullScreen();">
+<body onload="startTimer(); enterFullScreen(); disableBackButton();">
+
+  <!-- Navbar -->
+  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-white shadow-sm px-4">
+    <a class="navbar-brand d-flex align-items-center" href="#">
+      <img src="{% static 'Icon-logo-png.png' %}" alt="Icon Logo">
+      <span class="fw-bold fs-5">Icon Assessment Portal</span>
+    </a>
+  </nav>
 
 <div class="container-fluid">
   <div class="row">
@@ -52,43 +85,43 @@
       <h6>Question Palette</h6>
       <div class="d-flex flex-wrap">
         {% for question in questions %}
-          <div class="progress-pill not-visited" id="qpill{{ forloop.counter }}">{{ forloop.counter }}</div>
+          <div class="progress-pill not-visited {% if forloop.counter == current_question_index %}current{% endif %}" 
+               id="qpill{{ forloop.counter }}">{{ forloop.counter }}</div>
         {% endfor %}
       </div>
     </div>
 
     <!-- Main content -->
-    <div class="col-md-7 p-4">
+    <div class="col-md-7 main-content">
       <div class="question-box mb-4">
         <form id="submitForm" method="post" action="/submit/">
-  {% csrf_token %}
-  
-  <input type="hidden" name="question_id" value="{{ current_question.id }}">
+          {% csrf_token %}
+          <input type="hidden" name="question_id" value="{{ current_question.id }}">
+          <input type="hidden" id="current_question_index" value="{{ current_question_index }}">
+          
+          <p><strong>Q{{ current_question_index }}:</strong> {{ current_question.question_text }}</p>
 
-  <p><strong>Q{{ current_question_index }}:</strong> {{ current_question.question_text }}</p>
+          <label><input type="radio" name="question_{{ current_question.id }}" value="A"> {{ current_question.option_a }}</label><br>
+          <label><input type="radio" name="question_{{ current_question.id }}" value="B"> {{ current_question.option_b }}</label><br>
+          <label><input type="radio" name="question_{{ current_question.id }}" value="C"> {{ current_question.option_c }}</label><br>
+          <label><input type="radio" name="question_{{ current_question.id }}" value="D"> {{ current_question.option_d }}</label>
 
-  <label><input type="radio" name="question_{{ current_question.id }}" value="A" required> {{ current_question.option_a }}</label><br>
-  <label><input type="radio" name="question_{{ current_question.id }}" value="B"> {{ current_question.option_b }}</label><br>
-  <label><input type="radio" name="question_{{ current_question.id }}" value="C"> {{ current_question.option_c }}</label><br>
-  <label><input type="radio" name="question_{{ current_question.id }}" value="D"> {{ current_question.option_d }}</label>
-
-  <div class="mt-4">
-    <button type="reset" class="btn btn-outline-secondary btn-sm">Clear Response</button>
-    <button type="submit" class="btn btn-primary float-end">Save and Next</button>
-  </div>
-</form>
-
+          <div class="mt-4">
+            <button type="reset" class="btn btn-outline-secondary btn-sm">Clear Response</button>
+            <button type="submit" class="btn btn-primary float-end">Save and Next</button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Right Sidebar -->
-    <div class="col-md-3 p-4">
+    <div class="col-md-3 right-sidebar">
       <div class="timer-box mb-3 text-center">
         <h5>Time Remaining</h5>
         <h4 id="timer">60:00</h4>
       </div>
       <div class="text-center">
-        <button class="btn btn-danger w-100 mb-2" onclick="document.getElementById('submitForm').submit();">Review and Submit</button>
+        <a href="/review/" class="btn btn-danger w-100 mb-2">Review and Submit</a>
       </div>
       <div class="mt-3">
         <h6>Overview</h6>
@@ -98,65 +131,176 @@
           <li class="list-group-item d-flex justify-content-between">Not Answered <span id="not-answered-count">{{ questions|length }}</span></li>
         </ul>
       </div>
-      <div class="mt-4">
-        <video id="webcam-preview" width="100%" height="160" autoplay muted class="rounded border"></video>
-      </div>
     </div>
   </div>
 </div>
-
 <script>
-  // Timer
+  // Security and state tracking
   let time = 60 * 60; // 60 minutes
+  let tabSwitchCount = 0;
+  let fullscreenExitCount = 0;
+  const maxViolations = 1;
+  let isSubmittingForm = false;
+  let isTestActive = true;
+
+  // Timer countdown
   function startTimer() {
     const timerEl = document.getElementById("timer");
     const interval = setInterval(() => {
+      if (!isTestActive) {
+        clearInterval(interval);
+        return;
+      }
       const mins = Math.floor(time / 60).toString().padStart(2, "0");
       const secs = (time % 60).toString().padStart(2, "0");
       timerEl.textContent = `${mins}:${secs}`;
       if (--time < 0) {
         clearInterval(interval);
-        alert("Time's up! Test will be submitted.");
+        isSubmittingForm = true;
         document.getElementById("submitForm").submit();
       }
     }, 1000);
   }
 
-  // Webcam
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      document.getElementById("webcam-preview").srcObject = stream;
-    }).catch(() => alert("Webcam access required."));
-
-  // Fullscreen
+  // Enter fullscreen
   function enterFullScreen() {
-    let el = document.documentElement;
-    if (el.requestFullscreen) el.requestFullscreen();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error("Fullscreen error:", err.message);
+      });
+    }
   }
 
-  // Disable Dev Tools
-  document.addEventListener("contextmenu", e => e.preventDefault());
-  document.addEventListener("keydown", function(e) {
-    if (e.ctrlKey && ['c', 'v', 'u'].includes(e.key)) e.preventDefault();
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) e.preventDefault();
+  // Tab switch detection
+  document.addEventListener("visibilitychange", function () {
+    if (isTestActive && !isSubmittingForm && document.hidden) {
+      tabSwitchCount++;
+      if (tabSwitchCount > maxViolations) {
+        isTestActive = false;
+        window.location.href = '/test-ended/';
+      } else {
+        alert("Warning: Tab switch detected. One more violation will disqualify you.");
+        enterFullScreen();
+      }
+    }
   });
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const pills = document.querySelectorAll(".progress-pill");
+  // Fullscreen exit detection
+  document.addEventListener("fullscreenchange", function () {
+    if (!document.fullscreenElement && isTestActive && !isSubmittingForm) {
+      fullscreenExitCount++;
+      if (fullscreenExitCount > maxViolations) {
+        isTestActive = false;
+        window.location.href = '/test-ended/';
+      } else {
+        alert("Warning: Exiting fullscreen is not allowed. One more violation will disqualify you.");
+        enterFullScreen();
+      }
+    }
+  });
 
-    let total = pills.length;
-    let answered = 0;
-    let bookmarked = 0;  // Implement bookmark logic later
-    pills.forEach(p => {
-      if (p.classList.contains("answered")) answered++;
+  // Form submit flag
+  document.getElementById("submitForm").addEventListener("submit", function () {
+    isSubmittingForm = true;
+  });
+
+  // Disable back button
+  function disableBackButton() {
+    history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+      if (isTestActive) {
+        history.go(1);
+      }
+    };
+
+    const pills = document.querySelectorAll(".progress-pill");
+    pills.forEach(pill => {
+      pill.style.cursor = "default";
+      pill.onclick = function () {
+        const currentIndex = parseInt(document.getElementById("current_question_index").value);
+        const pillIndex = parseInt(this.textContent);
+        if (pillIndex <= currentIndex) {
+          window.location.href = `/assessment/?q=${pillIndex}`;
+        }
+      };
+    });
+  }
+
+  // Input blocking
+  document.addEventListener("contextmenu", e => e.preventDefault());
+
+  document.addEventListener("keydown", function (e) {
+    if (!isTestActive) return;
+
+    // Block dev tools
+    if (e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J'].includes(e.key)) ||
+        (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault();
+    }
+
+    // Block refresh
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+      e.preventDefault();
+    }
+
+    // Block tab switching
+    if ((e.altKey && e.key === 'Tab') || (e.metaKey && e.key === 'Tab')) {
+      e.preventDefault();
+    }
+  });
+
+  // Screenshot protection
+  document.addEventListener('keyup', function (e) {
+    if (e.key === 'PrintScreen') {
+      navigator.clipboard.writeText('');
+      alert("Screenshots are not allowed during the test.");
+    }
+  });
+
+  // DOM Load
+  document.addEventListener("DOMContentLoaded", function () {
+    // Question pill logic
+    const pills = document.querySelectorAll(".progress-pill");
+    const answeredQuestionIds = JSON.parse("{{ answered_question_ids|safe }}");
+    const currentIndex = parseInt("{{ current_question_index }}");
+    
+    let answeredCount = 0;
+    pills.forEach((pill, index) => {
+      const questionNum = index + 1;
+
+      if (questionNum <= currentIndex) {
+        pill.classList.add("visited");
+        pill.classList.remove("not-visited");
+      }
+
+      if (answeredQuestionIds.includes(questionNum)) {
+        pill.classList.add("answered");
+        answeredCount++;
+      }
+
+      if (questionNum === currentIndex) {
+        pill.classList.add("current");
+      }
     });
 
-    let notAnswered = total - answered;
+    // Update counters
+    document.getElementById("answered-count").innerText = answeredCount;
+    document.getElementById("not-answered-count").innerText = pills.length - answeredCount;
 
-    document.getElementById("answered-count").innerText = answered;
-    document.getElementById("not-answered-count").innerText = notAnswered;
-    document.getElementById("bookmarked-count").innerText = bookmarked;
+    // Activate protection
+    disableBackButton();
+    enterFullScreen();
+    startTimer();
+
+    // Ensure fullscreen always stays on
+    setInterval(() => {
+      if (isTestActive && !document.fullscreenElement) {
+        enterFullScreen();
+      }
+    }, 1000);
   });
 </script>
+
 </body>
 </html>
